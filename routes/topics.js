@@ -221,7 +221,6 @@ router.route('/advancedsearch')
             }
         }
         
-        console.log(must_fields_array);
         console.log(must_queries);
         console.log(should_queries);
         console.log(mustnot_queries);
