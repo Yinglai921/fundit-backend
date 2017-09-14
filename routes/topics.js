@@ -41,6 +41,9 @@ const H2020TopicsAPI = "http://ec.europa.eu/research/participants/portal/data/ca
 
  /****** END OF CREATING DB *****/
 
+
+
+ 
 // route definitions here....
 
 
@@ -200,7 +203,6 @@ router.route('/advancedsearch')
                 })
             }
         }
-
         if (mustnot_fields_array.length !== 0){
             if (NOT_array[0] !== "undefined"){
                 // form must not query array
