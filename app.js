@@ -20,5 +20,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use('/api', require('./routes/topics'));
 
 // app.use('/generate-keywords', require('./routes/keywords'));
+
+app.use('/api', require('./routes/keywordTree'));
 // set the port
 app.listen(3001);
