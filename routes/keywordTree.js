@@ -38,8 +38,10 @@ function createKeyword(node){
 }
 
 
-
+///////////////////////////////
 /// WRITE KEYWORDS DATA TO DB, run it only once 
+///////////////////////////////
+
 
 // fs.readFile('data/keywords.json', function(err, data){
 //     if (err){
@@ -51,8 +53,9 @@ function createKeyword(node){
 // }});
 
 
+///////////////////////////////
 /// END OF WRITE KEYWORDS DATA TO DB
-
+///////////////////////////////
 
 
 

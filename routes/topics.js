@@ -80,13 +80,14 @@ router.route('/search')
         // if(inTags === 'true'){
         //     query.query.dis_max.queries.push( { "match_phrase": { "tags": term }});
         // }
+        let phase = `"${term}"`;
 
         const query = {
-            'size' : 101,
+            'size' : 3000,
             "query": {
                 "query_string" : {
                     "fields" : [],
-                    "query" : term
+                    "query" : phase
                 }
             }
         }
