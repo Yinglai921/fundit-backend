@@ -31,8 +31,8 @@ var Topic = new Schema({
     flags: {type: Array, es_indexed:true},
     actions: {type: Array, es_indexed:true},
     callIdentifier: {type: String, es_indexed:true},
-    callTitle: {type: String, es_indexed:true}
-
+    callTitle: {type: String, es_indexed:true},
+    description: {type: String, es_indexed:true}
 });
 
 Topic.plugin(mongoosastic);

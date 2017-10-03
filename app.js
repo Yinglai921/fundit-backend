@@ -17,8 +17,8 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 // app.use('/', require('./routes/index'));
 // register all routers, all routes are prefixed with /api
+app.use('/api', require('./routes/search'));
 app.use('/api', require('./routes/topics'));
-
 // app.use('/generate-keywords', require('./routes/keywords'));
 
 app.use('/api', require('./routes/keywordTree'));
