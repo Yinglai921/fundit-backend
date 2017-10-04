@@ -30,34 +30,67 @@ router.route('/search')
         const inKeywords = req.param('inkeywords');
         const inTags = req.param('intags');
         const inDescription = req.param('indescription');
+        const inOpen = req.param('inopen');
         //const size = parseInt(req.param('size'));
 
+        // const query = {
+        //     'size': 3000,  // max size == 100
+        //     'query': { 
+        //         "filtered": {
+        //             "query":{
+        //                 "query_string": {
+        //                     "fields": [],
+        //                     "query": term,
+        //                     "default_operator": "AND",
+        //                     "use_dis_max": true
+        //                 }
+        //             },
+        //             "filter": {
+        //                 //"term": {"callStatus": "Open"}
+        //             }
+        //         }
+        //     }
+        // }
+
         const query = {
-            'size': 3000,  // max size == 100
-            'query': { 
-                "query_string": {
-                    "fields": [],
-                    "query": term,
-                    "default_operator": "AND",
-                    "use_dis_max": true
+            "size": 3000,
+            "query":{
+                "bool":{
+                    "must":[
+                        //{ "match": {"callStatus": "Open"}}
+                    ],
+                    "filter":[
+                        {
+                            "query_string":{
+                                "fields": [],
+                                "query": term,
+                                "default_operator": "AND",
+                                "use_dis_max": true
+                            }
+                        }
+                    ]
                 }
             }
         }
 
+
         if (inTitle === 'true'){
-            query.query.query_string.fields.push("title");
+            query.query.bool.filter[0].query_string.fields.push("title");
         }
 
         if(inKeywords === 'true'){
-            query.query.query_string.fields.push("keywords");
+            query.query.bool.filter[0].query_string.fields.push("keywords");
         }
 
         if(inTags === 'true'){
-            query.query.query_string.fields.push("tags");
+            query.query.bool.filter[0].query_string.fields.push("tags");
         }
 
         if(inDescription === 'true'){
-            query.query.query_string.fields.push("description");
+            query.query.bool.filter[0].query_string.fields.push("description");
+        }
+        if(inOpen == 'true'){
+            query.query.bool.must.push({ "match": {"callStatus": "Open"}});
         }
 
 
@@ -65,7 +98,7 @@ router.route('/search')
             res.send([]);
         } else {
             Topic.esSearch(query, function(err, results){
-                console.log(query);
+               // console.log(query.query.filtered.query);
                 if (err) return err;
 
                 res.send(results.hits.hits);
