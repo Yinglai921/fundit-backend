@@ -33,24 +33,6 @@ router.route('/search')
         const inOpen = req.param('inopen');
         //const size = parseInt(req.param('size'));
 
-        // const query = {
-        //     'size': 3000,  // max size == 100
-        //     'query': { 
-        //         "filtered": {
-        //             "query":{
-        //                 "query_string": {
-        //                     "fields": [],
-        //                     "query": term,
-        //                     "default_operator": "AND",
-        //                     "use_dis_max": true
-        //                 }
-        //             },
-        //             "filter": {
-        //                 //"term": {"callStatus": "Open"}
-        //             }
-        //         }
-        //     }
-        // }
 
         const query = {
             "size": 3000,
