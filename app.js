@@ -16,10 +16,12 @@ app.use(bodyParser.urlencoded({ extended: true }))
     .use(bodyParser.json());
 
 // register all routers, all routes are prefixed with /api
-app.use('/api', require('./routes/search'));
-app.use('/api', require('./routes/topics'));
+// app.use('/api', require('./routes/search'));
+
+//app.use('/api', require('./routes/topics'));
 app.use('/api', require('./routes/keywords'));
 app.use('/api', require('./routes/new-search'));
+//app.use('/api', require('./routes/test'));
 
 app.use('/api', require('./routes/keywordTree'));
 // set the port
