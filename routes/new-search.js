@@ -14,14 +14,12 @@ const JSONStream = require('JSONStream');
 
 const router = express.Router();
 
-
 const options = {
-    indexPath: 'myCoolIndex',
+    indexPath: 'topicIndex',
     logLevel: 'error'
   }
 
-let index;
-let searchResults = [];
+let index, searchResults;
 
 function indexData(err, newIndex){
     if(!err){
@@ -37,46 +35,112 @@ router.route('/search')
 
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+
+        let term = req.param('q').toString();
+        const inTitle = req.param('intitle') == 'true' ? true : false;
+        const inKeywords = req.param('inkeywords') == 'true' ? true : false;
+        const inTags = req.param('intags') == 'true' ? true : false;
+        const inDescription = req.param('indescription')  == 'true' ? true : false;
+        const inOpen = req.param('inopen') == 'true' ? true : false;
+
+        const callStatus = inOpen ? 'open' : '*'; // search term doesn't accept capital letter
         
-        // const term = req.param('q').toString();
-        // const inTitle = req.param('intitle') == 'true' ? true : false;
-        // const inKeywords = req.param('inkeywords') == 'true' ? true : false;
-        // const inTags = req.param('intags') == 'true' ? true : false;
-        // const inDescription = req.param('indescription')  == 'true' ? true : false;
-        // const inOpen = req.param('inopen') == 'true' ? true : false;
+        const query = {};
+        query.query = [];
+        query.pageSize = 3000;
+        let notArray;
+        
+        if (term.indexOf("NOT") !== -1){
+            notArray = term.split("NOT")[1]; // we assume there is only one NOT appear
+            term = term.slice(0, term.indexOf("NOT"));
+            console.log("term remove NOT: ", term)
+            notArray = notArray.split(" ").filter((item) => {return item.length > 1});
+            console.log("NOT array: ", notArray)
+        }
 
-        // const query = {
-        //     term: term,
-        //     inTitle: inTitle,
-        //     inKeywords: inKeywords,
-        //     inTags: inTags,
-        //     inDescription: inDescription,
-        //     inOpen: inOpen
-        // }
+        if (term.indexOf("OR") !== -1){
+            let termArray = term.split("OR");
+            termArray.forEach((data) => {
+                let searchArray = data.split(" ");
+                formQuery(searchArray.filter((item) => {return item.length > 1}));
+            })
+        } else {
+            let termArray = term.split(" ");
+            formQuery(termArray.filter((item) => {return item.length > 1}));
+        }
 
-        //const size = parseInt(req.param('size'));
 
-        // readTopics().then(() => {
-        //     searchTopics(topics, query).then(() => {
-        //         res.send(searchResults);
-        //     })
-        // })
+        search();
 
-        let q = {};
-        q.query = {
-            AND: {'*': ['bio']}
-          }
-        q.pageSize = 3000
-        searchResults = [];
+        function formQuery(searchArray){
 
-        index.search(q)
-        .on("data", function(doc){
-            searchResults.push(doc['document']['title']);
-        })
-        .on('finish', function(){
-            res.send(searchResults);
-        })
+            let queryObj = {};
 
+            if (inTitle){
+                queryObj.AND = {
+                    "title" : searchArray,
+                    "callStatus" : [callStatus]
+                }
+                if (notArray !== undefined && notArray.length > 0){
+                    
+                    queryObj.NOT = {
+                        "title" : notArray,
+                    }
+                }
+                console.log("title query object: ", queryObj)
+                query.query.push(queryObj)
+            }
+            if (inKeywords){
+                queryObj.AND = {
+                    "keywordstr" : searchArray,
+                    "callStatus" : [callStatus]
+                }
+                if (notArray !== undefined && notArray.length > 0){
+                    queryObj.NOT = {
+                        "keywordstr" : notArray,
+                    }
+                }
+                query.query.push(queryObj)
+            }
+
+            if (inTags){
+                queryObj.AND = {
+                    "tagstr" : searchArray,
+                    "callStatus" : [callStatus]
+                }
+                if (notArray !== undefined && notArray.length > 0){
+                    queryObj.NOT = {
+                        "tagstr" : notArray,
+                    }
+                }
+                query.query.push(queryObj)
+            }
+            if (inDescription){
+                queryObj.AND = {
+                    "description" : searchArray,
+                    "callStatus" : [callStatus]
+                }
+                if (notArray !== undefined && notArray.length > 0){
+                    queryObj.NOT = {
+                        "description" : notArray,
+                    }
+                }
+                query.query.push(queryObj)
+            }
+
+        }
+
+        function search(){ 
+            searchResults = [];
+
+            index.search(query)
+                .on("data", function(doc){
+                    searchResults.push(doc['document']);
+                })
+                .on('end', function(){
+                    res.send(searchResults);
+                })
+        }
 
     })
 
@@ -91,3 +155,25 @@ module.exports = router;
 
 
 
+
+// q.query = [                   // Each array element is an OR condition
+//     {
+//       AND: {             
+//         'title': ['reagan'],    // 'reagan' AND 'ussr'   
+//         'body':  ['ussr']
+//       },
+//       NOT: {
+//         'body':  ['usa']        // but NOT 'usa' in the body field
+//       }
+//     },
+//     {                           // OR this condition
+//       AND: {                  
+//         'title': ['gorbachev'], // 'gorbachev' AND 'ussr'
+//         'body':  ['ussr']
+//       },
+//       NOT: {
+//         'body':  ['usa']        // NOT 'usa' in the body field
+//       }
+//     }
+//   }
+// ]

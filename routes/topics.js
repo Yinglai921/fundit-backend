@@ -65,7 +65,12 @@ router.route('/writetopics')
                 //console.log(response);
                 let topics = response.data.topicData.Topics;
                 topics.forEach((topic, i) => { 
-                  
+
+                    if (topic.keywords !== undefined)
+                        topic.keywordstr = topic.keywords.join();
+                    if (topic.tags !== undefined)
+                        topic.tagstr = topic.tags.join();
+
                     axios.get(`${H2020TopicsDescAPIRoot}${topic.identifier.toLowerCase()}.json`).then(response => {
                         if (response.data.description !== undefined){
                             topic.description = response.data.description;
@@ -112,15 +117,13 @@ router.route('/writeindex')
 
         readTopics().then(() => {
 
-            topics.forEach((topic, i) =>{
-               // console.log(typeof(topic))
+
+            topics.forEach((topic, i) => {
                 dataStream.push(topic);
-                console.log(i)
+                console.log("datastream: ", i);
             })
             
             dataStream.push(null);
-
-            console.log(dataStream)
         
             function indexData(err, newIndex){
                 
@@ -130,6 +133,9 @@ router.route('/writeindex')
                     dataStream                       // <- stream of docs to be indexed
                       .pipe(index.defaultPipeline())
                       .pipe(index.add())
+                      .on("finish",() => {
+                          console.log("Index finish.")
+                      })
      
                 }else{
                     console.log(err)

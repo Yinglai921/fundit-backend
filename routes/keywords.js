@@ -14,9 +14,26 @@ const axios = require('axios');
 
 const fs = require('jsonfile');
 
+const SearchIndex = require ('search-index');
+
 const H2020KeywordsAPI = "http://ec.europa.eu/research/participants/portal/data/call/trees/portal_keyword_tree.json";
 
 
+
+const options = {
+    indexPath: 'topicIndex',
+    logLevel: 'error'
+  }
+
+let index, searchResults;
+
+function indexData(err, newIndex){
+    if(!err){
+        index = newIndex;
+    }
+}
+
+SearchIndex(options, indexData);
 
 
 
@@ -70,37 +87,41 @@ function debuglog(node){
 
 function SearchKeywordInOpenTopics(keyword){
 
+    let lowkeyword = keyword.toLowerCase();
+    let keywordList = lowkeyword.split(" ");
     return new Promise(function(resolve, reject){
-        const queryOpen = {
-            "size": 200,
-            "query":{
-                "bool":{
-                    "must":[
-                        { "match": {"callStatus": "Open"}}
-                    ],
-                    "filter":[
-                        { "match_phrase": { "keywords": keyword }}
-                        // {
-                        //     "query_string":{
-                        //         "default_field": "keywords",
-                        //         "query": keyword,
-                        //         "default_operator": "AND",
-                        //     }
-                        // }
-                    ]
+        const query = {};
+        query.query = [
+            {
+                'AND':{
+                    "keywordstr" : keywordList,
+                    "callStatus" : ['open']
                 }
             }
-        }
-        let request = Topic.esSearch(queryOpen, function(err, results){
-            // console.log(query.query.filtered.query);
-             if (err) return err;
-             tempValue = results.hits.total;
+        ];
+        query.pageSize = 3000;
+    
 
-             if (tempValue !== -1)
-                resolve();
-             else
-                reject();
-         })
+        index.totalHits(query, function(err, count){
+                tempValue = count;
+                console.log("hits: ",tempValue);
+                console.log("query: ", keywordList);
+                if (tempValue !== -1)
+                    resolve()
+                else   
+                    reject()
+            })
+        
+        // let request = Topic.esSearch(queryOpen, function(err, results){
+        //     // console.log(query.query.filtered.query);
+        //      if (err) return err;
+        //      tempValue = results.hits.total;
+
+        //      if (tempValue !== -1)
+        //         resolve();
+        //      else
+        //         reject();
+        //  })
     })
 
 }
@@ -108,39 +129,44 @@ function SearchKeywordInOpenTopics(keyword){
 function SearchKeywordInTopics(keyword){
 
     return new Promise(function(resolve, reject){
-        let query = {
-            'size': 200,  // max size == 100
-            'query': { "match_phrase": { "keywords": keyword }}
-            // "query":{
-            //     "bool":{
-            //         "must":[
-            //             //{ "match": {"callStatus": "Open"}}
-            //         ],
-            //         "filter":[
-            //             //{ "match_phrase": { "keywords": keyword }}
-            //             {
-            //                 "query_string":{
-            //                     "default_field": "keywords",
-            //                     "query": keyword,
-            //                     "default_operator": "AND",
-            //                 }
-            //             }
-            //         ]
-            //     }
-            // }
-        }
-        Topic.esSearch(query, function(err, results){
-            if (err) return err;
-            
-            tempValue = results.hits.total;
 
-            if (tempValue !== -1){
-                resolve();
-            }else{
-                reject();
+        let lowkeyword = keyword.toLowerCase();
+        let keywordList = lowkeyword.split(" ");
+
+        const query = {};
+        query.query = [
+            {
+                'AND':{
+                    "keywordstr" : keywordList,
+                    "callStatus" : ['*']
+                }
             }
+        ];
+        query.pageSize = 3000;
+    
 
-        })
+        index.totalHits(query, function(err, count){
+                tempValue = count;
+                console.log("hits: ",tempValue);
+                console.log("query: ", keywordList);
+                if (tempValue !== -1)
+                    resolve()
+                else   
+                    reject()
+            })
+
+        // Topic.esSearch(query, function(err, results){
+        //     if (err) return err;
+            
+        //     tempValue = results.hits.total;
+
+        //     if (tempValue !== -1){
+        //         resolve();
+        //     }else{
+        //         reject();
+        //     }
+
+        // })
     })
 
 }
