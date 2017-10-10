@@ -27,10 +27,10 @@ const JSONStream = require('JSONStream')
 let index;
 let topics;
 
-const options = {
-    indexPath: 'topicIndex',
-    logLevel: 'error'
-}
+// const options = {
+//     indexPath: 'topicIndex',
+//     logLevel: 'error'
+// }
 
 // index js object
 const Readable = require('stream').Readable;
@@ -114,6 +114,7 @@ router.route('/writetopics')
 router.route('/writeindex')
     .get((req, res) => {
 
+        index = req.app.get('index');
 
         readTopics().then(() => {
 
@@ -124,25 +125,32 @@ router.route('/writeindex')
             })
             
             dataStream.push(null);
-        
-            function indexData(err, newIndex){
-                
-                if (!err){
-                    index = newIndex;
 
-                    dataStream                       // <- stream of docs to be indexed
-                      .pipe(index.defaultPipeline())
-                      .pipe(index.add())
-                      .on("finish",() => {
-                          console.log("Index finish.")
-                      })
+            dataStream                       // <- stream of docs to be indexed
+                .pipe(index.defaultPipeline())
+                .pipe(index.add())
+                .on("finish",() => {
+                    console.log("Index finish.")
+                })
+        
+            // function indexData(err, newIndex){
+                
+            //     if (!err){
+            //         index = newIndex;
+
+            //         dataStream                       // <- stream of docs to be indexed
+            //           .pipe(index.defaultPipeline())
+            //           .pipe(index.add())
+            //           .on("finish",() => {
+            //               console.log("Index finish.")
+            //           })
      
-                }else{
-                    console.log(err)
-                }
-            }
+            //     }else{
+            //         console.log(err)
+            //     }
+            // }
     
-            SearchIndex(options, indexData);
+            // SearchIndex(options, indexData);
 
         }).catch((error) => {
             console.log(error.message);

@@ -20,20 +20,20 @@ const H2020KeywordsAPI = "http://ec.europa.eu/research/participants/portal/data/
 
 
 
-const options = {
-    indexPath: 'topicIndex',
-    logLevel: 'error'
-  }
+// const options = {
+//     indexPath: 'topicIndex',
+//     logLevel: 'error'
+//   }
 
 let index, searchResults;
 
-function indexData(err, newIndex){
-    if(!err){
-        index = newIndex;
-    }
-}
+// function indexData(err, newIndex){
+//     if(!err){
+//         index = newIndex;
+//     }
+// }
 
-SearchIndex(options, indexData);
+// SearchIndex(options, indexData);
 
 
 
@@ -100,7 +100,7 @@ function SearchKeywordInOpenTopics(keyword){
             }
         ];
         query.pageSize = 3000;
-    
+        
 
         index.totalHits(query, function(err, count){
                 tempValue = count;
@@ -232,6 +232,9 @@ function list_to_tree(list) {
 
 router.route("/keywordmapvalue")
     .get((req, res) => {
+
+        index = req.app.get('index');
+        
         axios.get(H2020KeywordsAPI)
         .then(response => {
             let root = {

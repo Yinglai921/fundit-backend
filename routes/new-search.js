@@ -14,20 +14,20 @@ const JSONStream = require('JSONStream');
 
 const router = express.Router();
 
-const options = {
-    indexPath: 'topicIndex',
-    logLevel: 'error'
-  }
+// const options = {
+//     indexPath: 'topicIndex',
+//     logLevel: 'error'
+//   }
 
 let index, searchResults;
 
-function indexData(err, newIndex){
-    if(!err){
-        index = newIndex;
-    }
-}
+// function indexData(err, newIndex){
+//     if(!err){
+//         index = newIndex;
+//     }
+// }
 
-SearchIndex(options, indexData); 
+// SearchIndex(options, indexData); 
 
 router.route('/search')
 
@@ -49,6 +49,8 @@ router.route('/search')
         query.query = [];
         query.pageSize = 3000;
         let notArray;
+
+        
         
         if (term.length == 0){
             res.json([]);
@@ -69,8 +71,12 @@ router.route('/search')
                     formQuery(searchArray.filter((item) => {return item.length > 1}));
                 })
             } else {
-                let termArray = term.split(" ");
-                formQuery(termArray.filter((item) => {return item.length > 1}));
+                if (term == "*"){
+                    formQuery(["*"])
+                } else {
+                    let termArray = term.split(" ");
+                    formQuery(termArray.filter((item) => {return item.length > 1}));
+                }
             }
 
             search();
@@ -143,6 +149,8 @@ router.route('/search')
 
             console.log("search query: ", query.query)
             console.log(" ")
+
+            index = req.app.get('index');
 
             index.search(query)
                 .on("data", function(doc){
