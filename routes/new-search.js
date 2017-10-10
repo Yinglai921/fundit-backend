@@ -27,7 +27,7 @@ function indexData(err, newIndex){
     }
 }
 
-SearchIndex(options, indexData);
+SearchIndex(options, indexData); 
 
 router.route('/search')
 
@@ -35,6 +35,7 @@ router.route('/search')
 
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+
 
         let term = req.param('q').toString();
         const inTitle = req.param('intitle') == 'true' ? true : false;
@@ -73,6 +74,7 @@ router.route('/search')
             }
 
             search();
+
         }
        
 
@@ -150,7 +152,6 @@ router.route('/search')
                     res.send(searchResults);
                 })
         }
-
     })
 
 

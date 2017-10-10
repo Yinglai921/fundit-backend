@@ -3,6 +3,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 
+
 // create the express app
 var app = express();
 
@@ -18,9 +19,10 @@ app.use(bodyParser.urlencoded({ extended: true }))
 // register all routers, all routes are prefixed with /api
 // app.use('/api', require('./routes/search'));
 
-//app.use('/api', require('./routes/topics'));
-//app.use('/api', require('./routes/keywords'));
-app.use('/api', require('./routes/new-search'));
+
+app.use('/api', require('./routes/topics'));   // inital index
+// app.use('/api', require('./routes/keywords'));  // use search
+app.use('/api', require('./routes/new-search'));  // use search
 app.use('/api', require('./routes/keywordTree'));
 // set the port
 app.listen(3001);

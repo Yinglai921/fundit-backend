@@ -18,6 +18,7 @@ const H2020TopicsAPI = "http://ec.europa.eu/research/participants/portal/data/ca
 // route definitions here....
 
 
+
 // normal search, with one word or one phase, multiple scopes
 router.route('/search')
 
@@ -25,14 +26,13 @@ router.route('/search')
 
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-        const term = req.param('q').toString();
-        const inTitle = req.param('intitle');
-        const inKeywords = req.param('inkeywords');
-        const inTags = req.param('intags');
-        const inDescription = req.param('indescription');
-        const inOpen = req.param('inopen');
+        const term = req.params.q.toString();
+        const inTitle = req.params.intitle;
+        const inKeywords = req.params.inkeywords;
+        const inTags = req.params.intags;
+        const inDescription = req.params.indescription;
+        const inOpen = req.params.inopen;
         //const size = parseInt(req.param('size'));
-
 
         const query = {
             "size": 3000,
