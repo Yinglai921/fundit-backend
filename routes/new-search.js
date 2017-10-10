@@ -44,39 +44,42 @@ router.route('/search')
         const inOpen = req.param('inopen') == 'true' ? true : false;
 
         const callStatus = inOpen ? 'open' : '*'; // search term doesn't accept capital letter
-        
         const query = {};
         query.query = [];
         query.pageSize = 3000;
         let notArray;
         
-        if (term.indexOf("NOT") !== -1){
-            notArray = term.split("NOT")[1]; // we assume there is only one NOT appear
-            term = term.slice(0, term.indexOf("NOT"));
-            console.log("term remove NOT: ", term)
-            notArray = notArray.split(" ").filter((item) => {return item.length > 1});
-            console.log("NOT array: ", notArray)
+        if (term.length == 0){
+            res.json([]);
+        }else{  
+
+            if (term.indexOf("NOT") !== -1){
+                notArray = term.split("NOT")[1]; // we assume there is only one NOT appear
+                term = term.slice(0, term.indexOf("NOT"));
+                console.log("term remove NOT: ", term)
+                notArray = notArray.split(" ").filter((item) => {return item.length > 1});
+                console.log("NOT array: ", notArray)
+            }
+    
+            if (term.indexOf("OR") !== -1){
+                let termArray = term.split("OR");
+                termArray.forEach((data) => {
+                    let searchArray = data.split(" ");
+                    formQuery(searchArray.filter((item) => {return item.length > 1}));
+                })
+            } else {
+                let termArray = term.split(" ");
+                formQuery(termArray.filter((item) => {return item.length > 1}));
+            }
+
+            search();
         }
-
-        if (term.indexOf("OR") !== -1){
-            let termArray = term.split("OR");
-            termArray.forEach((data) => {
-                let searchArray = data.split(" ");
-                formQuery(searchArray.filter((item) => {return item.length > 1}));
-            })
-        } else {
-            let termArray = term.split(" ");
-            formQuery(termArray.filter((item) => {return item.length > 1}));
-        }
-
-
-        search();
+       
 
         function formQuery(searchArray){
 
-            let queryObj = {};
-
             if (inTitle){
+                let queryObj = {};
                 queryObj.AND = {
                     "title" : searchArray,
                     "callStatus" : [callStatus]
@@ -87,10 +90,11 @@ router.route('/search')
                         "title" : notArray,
                     }
                 }
-                console.log("title query object: ", queryObj)
                 query.query.push(queryObj)
+                console.log("title query object: ", queryObj)
             }
             if (inKeywords){
+                let queryObj = {};
                 queryObj.AND = {
                     "keywordstr" : searchArray,
                     "callStatus" : [callStatus]
@@ -104,6 +108,7 @@ router.route('/search')
             }
 
             if (inTags){
+                let queryObj = {};
                 queryObj.AND = {
                     "tagstr" : searchArray,
                     "callStatus" : [callStatus]
@@ -116,6 +121,7 @@ router.route('/search')
                 query.query.push(queryObj)
             }
             if (inDescription){
+                let queryObj = {};
                 queryObj.AND = {
                     "description" : searchArray,
                     "callStatus" : [callStatus]
@@ -132,6 +138,9 @@ router.route('/search')
 
         function search(){ 
             searchResults = [];
+
+            console.log("search query: ", query.query)
+            console.log(" ")
 
             index.search(query)
                 .on("data", function(doc){
