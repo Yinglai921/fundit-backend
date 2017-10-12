@@ -1,10 +1,8 @@
-// routes/keywords.js
+// a schedued job, udpate keyword tree data collection
 
 'use strict';
 
 const express = require('express');
-
-const router = express.Router();
 
 const Topic = require('../models/topics');
 
@@ -18,22 +16,6 @@ const SearchIndex = require ('search-index');
 
 const H2020KeywordsAPI = "http://ec.europa.eu/research/participants/portal/data/call/trees/portal_keyword_tree.json";
 
-
-
-// const options = {
-//     indexPath: 'topicIndex',
-//     logLevel: 'error'
-//   }
-
-let index, searchResults;
-
-// function indexData(err, newIndex){
-//     if(!err){
-//         index = newIndex;
-//     }
-// }
-
-// SearchIndex(options, indexData);
 
 
 
@@ -62,9 +44,7 @@ function walkTreePromise(node, callback){
 
 }
 
-
-
-function debuglog(node){
+function modifyTree(node){
     console.log(node.name)
     //node.value = 0;
     let tempObj  = {};
@@ -85,8 +65,9 @@ function debuglog(node){
 
 }
 
-function SearchKeywordInOpenTopics(keyword){
+function SearchKeywordInOpenTopics(keyword, index){
 
+    console.log(keyword)
     let lowkeyword = keyword.toLowerCase();
     let keywordList = lowkeyword.split(" ");
     return new Promise(function(resolve, reject){
@@ -100,7 +81,6 @@ function SearchKeywordInOpenTopics(keyword){
             }
         ];
         query.pageSize = 3000;
-        
 
         index.totalHits(query, function(err, count){
                 tempValue = count;
@@ -115,7 +95,7 @@ function SearchKeywordInOpenTopics(keyword){
 
 }
 
-function SearchKeywordInTopics(keyword){
+function SearchKeywordInTopics(keyword, index){
 
     return new Promise(function(resolve, reject){
 
@@ -149,12 +129,12 @@ function SearchKeywordInTopics(keyword){
 }
 
 
-function AddOpenTopicsValue(flattenTree) {
+function AddOpenTopicsValue(flattenTree, index) {
 
     return new Promise(function(resolve, reject){
         let count = 0;
         flattenTree.forEach((keyword) =>{
-            SearchKeywordInOpenTopics(keyword.name).then(function(){
+            SearchKeywordInOpenTopics(keyword.name, index).then(function(){
                 keyword.open_value = tempValue;
                 count++;
                 console.log(count);
@@ -162,19 +142,19 @@ function AddOpenTopicsValue(flattenTree) {
                 if (count == flattenTree.length){
                     resolve();
                 }
-            }).catch(function(){
-                console.log("error");
+            }).catch(function(error){
+                console.log(error);
             })
         })
     })
 }
 
-function AddTopicsValue(flattenTree) {
+function AddTopicsValue(flattenTree, index) {
     
         return new Promise(function(resolve, reject){
             let count = 0;
             flattenTree.forEach((keyword) =>{
-                SearchKeywordInTopics(keyword.name).then(function(){
+                SearchKeywordInTopics(keyword.name, index).then(function(){
                     keyword.value = tempValue;
                     count++;
                     console.log(count);
@@ -183,7 +163,7 @@ function AddTopicsValue(flattenTree) {
                         resolve();
                     }
                 }).catch(function(){
-                    console.log("error");
+                    console.log("add topics error");
                 })
             })
         })
@@ -207,11 +187,19 @@ function list_to_tree(list) {
     return roots;
 }
 
-router.route("/keywordmapvalue")
-    .get((req, res) => {
 
-        index = req.app.get('index');
-        
+module.exports = function(index){
+
+    this.removeTree = function(){
+        Keyword.remove({}, function(err){
+            console.log("keyword tree deleted.")
+        })
+        .catch(error => {
+            console.log(error)
+        })
+    },
+
+    this.writeTree = function(){
         axios.get(H2020KeywordsAPI)
         .then(response => {
             let root = {
@@ -227,43 +215,22 @@ router.route("/keywordmapvalue")
                 }
                 root.children.push(data);
             })
-            
-            // res.send(root)
+        
             // resolve the tree, get flattenTree, use flattenTree in 'then'
-            walkTreePromise(root, debuglog)
+            walkTreePromise(root, modifyTree)
                 .then(function(){
-                    AddOpenTopicsValue(flattenTree).then(function(){
-                        //res.send(flattenTree);
-                        AddTopicsValue(flattenTree).then(function(){
-                             
+                    AddOpenTopicsValue(flattenTree, index).then(function(){  // iterate the flattenTree, add open_value for each
+                        AddTopicsValue(flattenTree, index).then(function(){  // iterate the flattenTree, add value for each
+                        
                             let finalTree = list_to_tree(flattenTree)
                             finalTree[0].children.push(finalTree[1]);
                             finalTree[0].children.push(finalTree[2]);
 
-                            res.send(finalTree[0])
+                            console.log("keyword tree update finish.")
                             Keyword.create(finalTree[0]);
                         })
                     })
-                }) // iterate the flattenTree, add open_value for each
-                // iterate the flattenTree, add value for each
-
-
+                }) 
         })
-        
-    })
-
-    .delete((req, res) => {
-        Keyword.remove({}, function(err){
-            res.send('keyword tree deleted')
-        })
-        .catch(error => {
-            console.log(error)
-        })
-     })
-
-
-
-
-
-module.exports = router;
-
+    }
+}

@@ -12,7 +12,7 @@ mongoose.connect(`mongodb://localhost/${dbName}`);
 
 //mongoose.connect('mongodb://mongo:27017');
 
-// get notified if the connection
+// get notified if the connection 
 // was successful or not
 const db = mongoose.connection;
 
