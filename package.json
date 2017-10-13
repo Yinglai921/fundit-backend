@@ -20,6 +20,7 @@
     "node-schedule": "^1.2.5",
     "nodemon": "^1.12.0",
     "request": "^2.81.0",
-    "search-index": "^0.13.0"
+    "search-index": "^0.13.0",
+    "winston": "^2.4.0"
   }
 }

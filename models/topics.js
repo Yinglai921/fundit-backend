@@ -32,7 +32,8 @@ var Topic = new Schema({
     actions: {type: Array},
     callIdentifier: {type: String},
     callTitle: {type: String},
-    description: {type: String }
+    description: {type: String },
+    budget: {type: Number}
 });
 
 //Topic.plugin(mongoosastic);

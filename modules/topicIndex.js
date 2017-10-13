@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 
 const axios = require('axios');
 
-const SearchIndex = require ('search-index');
+const fs = require('fs');
 
 const H2020TopicsAPI = "http://ec.europa.eu/research/participants/portal/data/call/h2020/topics.json";
 
@@ -20,7 +20,36 @@ const H2020TopicsDescAPIRoot = "http://ec.europa.eu/research/participants/portal
 const request = require('request')
 const JSONStream = require('JSONStream')
 
+const winston = require('winston');
 
+// *** Log to file settings *** //
+// set up logger
+const logDir = 'log';
+// Create the log directory if it does not exist
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir);
+}
+
+function tsFormat(){
+    return `${(new Date()).toLocaleDateString()}, ${(new Date()).toLocaleTimeString()}`;
+}
+const logger = new (winston.Logger)({
+  transports: [
+    // colorize the output to the console
+    new (winston.transports.Console)({
+      timestamp: tsFormat,
+      colorize: true,
+      level: 'info'
+    }),
+    new (winston.transports.File)({
+      filename: `${logDir}/updateTopicIndex.log`,
+      timestamp: tsFormat,
+      level: 'info'
+    })
+  ]
+})
+
+// ***End*** *** log to file settings *** //
 
 
 let topics;
@@ -55,7 +84,7 @@ module.exports = function(index){
     
     this.flushIndex = function(){
         index.flush(function(err) {
-            if (!err) console.log('success!')
+            if (!err) logger.info('Index delete success!')
             })
     }
 
@@ -73,7 +102,7 @@ module.exports = function(index){
                     .pipe(index.defaultPipeline())
                     .pipe(index.add())
                     .on("finish",() => {
-                        console.log("Index finish.")
+                        logger.info("Index finish.")
                     })
             
             }).catch((error) => {

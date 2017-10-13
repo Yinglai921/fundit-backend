@@ -10,13 +10,42 @@ const Keyword = require('../models/keywords');
 
 const axios = require('axios');
 
-const fs = require('jsonfile');
+const fs = require('fs');
 
 const SearchIndex = require ('search-index');
 
 const H2020KeywordsAPI = "http://ec.europa.eu/research/participants/portal/data/call/trees/portal_keyword_tree.json";
 
+const winston = require('winston');
 
+// *** Log to file settings *** //
+// set up logger
+const logDir = 'log';
+// Create the log directory if it does not exist
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir);
+}
+
+function tsFormat(){
+    return `${(new Date()).toLocaleDateString()}, ${(new Date()).toLocaleTimeString()}`;
+}
+const logger = new (winston.Logger)({
+  transports: [
+    // colorize the output to the console
+    new (winston.transports.Console)({
+      timestamp: tsFormat,
+      colorize: true,
+      level: 'info'
+    }),
+    new (winston.transports.File)({
+      filename: `${logDir}/updateKeywords.log`,
+      timestamp: tsFormat,
+      level: 'info'
+    })
+  ]
+})
+
+// ***End*** *** log to file settings *** //
 
 
 // the global value to store each search value
@@ -192,10 +221,10 @@ module.exports = function(index){
 
     this.removeTree = function(){
         Keyword.remove({}, function(err){
-            console.log("keyword tree deleted.")
+            logger.info("keyword tree deleted.")
         })
         .catch(error => {
-            console.log(error)
+            logger.info(error)
         })
     },
 
@@ -226,7 +255,7 @@ module.exports = function(index){
                             finalTree[0].children.push(finalTree[1]);
                             finalTree[0].children.push(finalTree[2]);
 
-                            console.log("keyword tree update finish.")
+                            logger.info("keyword tree update finish.")
                             Keyword.create(finalTree[0]);
                         })
                     })

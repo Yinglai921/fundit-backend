@@ -7,6 +7,12 @@
 # production
 /build
 
+# search index
+/topicIndex
+
+#log
+/log
+
 # misc
 .DS_Store   
 .env.local
