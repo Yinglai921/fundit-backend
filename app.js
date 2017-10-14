@@ -4,14 +4,15 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const SearchIndex = require('search-index');
 const schedule = require('node-schedule');
+const https = require('https');
+const winston = require('winston');
+const fs = require('fs');
 
 const updateTopics = require('./modules/topics');
 const updateIndex = require('./modules/topicIndex');
 const updateKeywords = require('./modules/keywords');
 
-const winston = require('winston');
 
-const fs = require('fs');
 
 // create the express app
 var app = express();
@@ -113,5 +114,20 @@ schedule.scheduleJob('0 1 1 * * *', function(){
 app.use('/api', require('./routes/search'));  // use search
 app.use('/api', require('./routes/keywordTree'));
 
-// set the port
-app.listen(3001);
+console.log(fs.readFileSync('/certs/localhost.p12'));
+
+if(fs.readFileSync('/certs/localhost.p12') == undefined){
+    // set the port
+    app.listen(3001);
+} else {
+    // set the port, use https
+    // KEY: /certs/localhost.p12 (Certificate in a java-keystore format)
+    // CERT: /cert/localhost.pass (Passphrase for the p12 store)
+    https.createServer({
+        key: fs.readFileSync('/certs/localhost.p12'),
+        cert: fs.readFile('/cert/localhost.pass')
+    }, app).listen(3001)
+}
+
+
+

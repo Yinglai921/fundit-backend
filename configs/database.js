@@ -4,19 +4,21 @@
 const mongoose = require('mongoose');
 
 // set the database name
-const dbName = 'fundit-api';
+const dbName = process.env.MONGODB_NAME == undefined ? 'fundit-api' : process.env.MONGODB_NAME;
 
 // connect to the database
 
-mongoose.connect(`mongodb://localhost/${dbName}`);
+if (process.env.MONGODB_USR == undefined){
+    mongoose.connect(`mongodb://localhost/${dbName}`);
+} else {
+    mongoose.connect('mongodb://'+process.env.MONGODB_USR+':'+process.env.MONGODB_PASSWD+'@'+process.env.MONGODB_SERVER+':'+process.env.MONGODB_PORT+'/'+process.env.MONGODB_NAME);
+}
 
-//mongoose.connect('mongodb://mongo:27017');
-
-// get notified if the connection 
+// get notified if the connection
 // was successful or not
 const db = mongoose.connection;
 
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', () => {
-    console.log(`Connected to the ${dbName} database`);
+    console.log(`Connected to ${dbName} database`);
 });
