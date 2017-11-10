@@ -35,10 +35,11 @@ const logger = new (winston.Logger)({
     new (winston.transports.Console)({
       timestamp: tsFormat,
       colorize: true,
-      level: 'info'
+      level: 'info',
+      json: true,
     }),
     new (winston.transports.File)({
-      filename: `${logDir}/updateKeywords.log`,
+      filename: `${logDir}/history.log`,
       timestamp: tsFormat,
       level: 'info'
     })
@@ -49,6 +50,7 @@ const logger = new (winston.Logger)({
 
 
 // the global value to store each search value
+
 let tempValue = -1;
 let flattenTree = [];
 
@@ -96,17 +98,14 @@ function modifyTree(node){
 
 function SearchKeywordInOpenTopics(keyword, index){
 
-    console.log(keyword)
     let lowkeyword = keyword.toLowerCase();
     let keywordList = lowkeyword.split(" ");
     return new Promise(function(resolve, reject){
         const query = {};
         query.query = [
             {
-                'AND':{
-                    "keywordstr" : keywordList,
-                    "callStatus" : ['open']
-                }
+                'AND':{ "keywordstr" : keywordList },
+                'NOT':{ "callStatus" : ['closed'] }
             }
         ];
         query.pageSize = 3000;
@@ -134,14 +133,10 @@ function SearchKeywordInTopics(keyword, index){
         const query = {};
         query.query = [
             {
-                'AND':{
-                    "keywordstr" : keywordList,
-                    "callStatus" : ['*']
-                }
+                'AND':{ "keywordstr" : keywordList }
             }
         ];
         query.pageSize = 3000;
-    
 
         index.totalHits(query, function(err, count){
                 tempValue = count;
@@ -168,6 +163,7 @@ function AddOpenTopicsValue(flattenTree, index) {
                 count++;
                 console.log(count);
                 console.log(keyword.name);
+                tempValue = -1;
                 if (count == flattenTree.length){
                     resolve();
                 }
@@ -187,7 +183,8 @@ function AddTopicsValue(flattenTree, index) {
                     keyword.value = tempValue;
                     count++;
                     console.log(count);
-                    console.log(keyword.name)
+                    console.log(keyword.name);
+                    tempValue = -1;
                     if (count == flattenTree.length){
                         resolve();
                     }

@@ -1,7 +1,6 @@
 // models/keywords.js
 
 const mongoose = require('mongoose');
-const tree = require('mongoose-tree');
 let Schema = mongoose.Schema;
 
 let Keyword = new Schema({

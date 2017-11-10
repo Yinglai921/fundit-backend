@@ -36,21 +36,24 @@ if (!fs.existsSync(logDir)) {
 function tsFormat(){
     return `${(new Date()).toLocaleDateString()}, ${(new Date()).toLocaleTimeString()}`;
 }
-const logger = new (winston.Logger)({
+
+const logger = new (winston.Logger)({ 
   transports: [
     // colorize the output to the console
     new (winston.transports.Console)({
       timestamp: tsFormat,
       colorize: true,
-      level: 'info'
+      level: 'info',
     }),
     new (winston.transports.File)({
-      filename: `${logDir}/updateTopics.log`,
+      filename: `${logDir}/history.log`,
       timestamp: tsFormat,
+      json: true,
       level: 'info'
     })
   ]
 })
+
 
 
 module.exports = {
@@ -67,7 +70,6 @@ module.exports = {
     writeTopics: function(){
         axios.get(H2020TopicsAPI)
         .then(response => {
-            
             // write budget info to closed topics
             fs.readFile(path.join(__dirname, '../data/budget.json'), function(err, data){
                 if (err){
@@ -94,7 +96,7 @@ module.exports = {
                         topic.budget = `€${(budget / 1000000).toFixed(2)}M`;
                     }
         
-                    // write description to each topic    
+                    // write description to each topic 
                     axios.get(`${H2020TopicsDescAPIRoot}${topic.identifier.toLowerCase()}.json`).then(response => {
                         if (response.data.description !== undefined){
                             topic.description = response.data.description;

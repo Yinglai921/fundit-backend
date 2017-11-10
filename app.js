@@ -7,6 +7,10 @@ const schedule = require('node-schedule');
 const https = require('https');
 const winston = require('winston');
 const fs = require('fs');
+const accessLog = require('kth-node-access-log');
+const cors = require('cors');
+
+
 
 const updateTopics = require('./modules/topics');
 const updateIndex = require('./modules/topicIndex');
@@ -16,8 +20,8 @@ const updateKeywords = require('./modules/keywords');
 
 // create the express app
 var app = express();
-
-
+app.use(accessLog({ useAccessLog: true }));
+app.use(cors());
 // *** Log to file settings *** //
 // set up logger
 const logDir = 'log';
@@ -35,19 +39,18 @@ const logger = new (winston.Logger)({
     new (winston.transports.Console)({
       timestamp: tsFormat,
       colorize: true,
-      level: 'info'
+      level: 'info',
     }),
     new (winston.transports.File)({
-      filename: `${logDir}/results.log`,
+      filename: `${logDir}/monitor.log`,
       timestamp: tsFormat,
+      json: true,
       level: 'info'
     })
   ]
 })
 
-app.set('logger', logger);
 // ***End*** *** log to file settings *** //
-
 
 // configure the body-parser to accept urlencoded bodies and json data
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -62,6 +65,29 @@ require('./configs/database');
 const options = {
     indexPath: 'topicIndex',
     logLevel: 'error',
+    fieldedSearch: true,
+    fieldOptions:{
+        topicId: {searchable: false},
+        subCallId: {searchable: false},
+        topicFileName: {searchable: false},
+        callProgramme: {searchable: false},
+        callFileName: {searchable: false},
+        plannedOpeningDate: {searchable: false},
+        plannedOpeningDateLong: {searchable: false},
+        publicationDate: {searchable: false},
+        publicationDateLong: {searchable: false},
+        mainSpecificProgrammeLevelCode: {searchable: false},
+        mainSpecificProgrammeLevelDesc: {searchable: false},
+        deadlineDates: {searchable: false},
+        deadlineDatesLong: {searchable: false},
+        identifier: {searchable: false},
+        flags: {searchable: false},
+        actions: {searchable: false},
+        callIdentifier: {searchable: false},
+        callTitle: {searchable: false},
+        budget: {searchable: false}
+    },
+    preserveCase: false,
 }
 
 let index, searchResults;
@@ -71,41 +97,40 @@ function indexData(err, newIndex){
         index = newIndex;
         app.set('index', index);
 
-        // a scheduled job, everyday 01:10, flush search index
-        schedule.scheduleJob('0 10 1 * * *', function(){
+        // a scheduled job, everyday 05:10, flush search index
+        schedule.scheduleJob('0 10 5 * * *', function(){
             let updateIndex1 = new updateIndex(index);
             updateIndex1.flushIndex();
         });
-        // a scheduled job, every 01:12, write new search index
-        schedule.scheduleJob('0 12 1 * * *', function(){
+        // a scheduled job, every 05:12, write new search index
+        schedule.scheduleJob('0 12 5 * * *', function(){
             let updateIndex1 = new updateIndex(index);
             updateIndex1.writeIndex();
         });
 
-        // a scheduled job, everyday 02:00, update keyword tree collection
-        schedule.scheduleJob('0 0 2 * * *', function(){
+        // a scheduled job, everyday 06:00, update keyword tree collection
+        schedule.scheduleJob('0 0 6 * * *', function(){
             let updateKeywords1 = new updateKeywords(index);
             updateKeywords1.removeTree();
         })
-        schedule.scheduleJob('0 1 2 * * *', function(){
+        schedule.scheduleJob('0 1 6 * * *', function(){
             let updateKeywords1 = new updateKeywords(index);
             updateKeywords1.writeTree();
         })
     }
 }
 
-
 SearchIndex(options, indexData); 
 
 // *** END *** *** Search-Index settings *** //
-
-// a scheduled job, everyday, 01:00, update Topic data collection
-schedule.scheduleJob('0 0 1 * * *', function(){
+// updateTopics.writeTopics();
+// a scheduled job, everyday, 05:00, update Topic data collection
+schedule.scheduleJob('0 0 5 * * *', function(){
     updateTopics.removeTopics();
 
 });
 
-schedule.scheduleJob('0 1 1 * * *', function(){
+schedule.scheduleJob('0 1 5 * * *', function(){
     updateTopics.writeTopics();
 });
 
@@ -113,21 +138,30 @@ schedule.scheduleJob('0 1 1 * * *', function(){
 // register all routers, all routes are prefixed with /api
 app.use('/api', require('./routes/search'));  // use search
 app.use('/api', require('./routes/keywordTree'));
+app.use('/api', require('./routes/log'));
+app.use('/api', require('./routes/authentication'));
 
-console.log(fs.readFileSync('/certs/localhost.p12'));
 
-if(fs.readFileSync('/certs/localhost.p12') == undefined){
-    // set the port
-    app.listen(3001);
-} else {
-    // set the port, use https
-    // KEY: /certs/localhost.p12 (Certificate in a java-keystore format)
-    // CERT: /cert/localhost.pass (Passphrase for the p12 store)
-    https.createServer({
-        key: fs.readFileSync('/certs/localhost.p12'),
-        cert: fs.readFile('/cert/localhost.pass')
-    }, app).listen(3001)
+let httpsOptions;
+
+if (process.env.SSL_CERTIFICATE_FILE !== undefined) {
+    var password = fs.readFileSync(process.env.SSL_CERTIFICATE_KEY) + '';
+    password = password.trim();
+    logger.info('APPLICATION_STATUS: OK');
+    httpsOptions = {
+        pfx: fs.readFileSync(process.env.SSL_CERTIFICATE_FILE),
+        passphrase: password
+    }
 }
+    
+try {
+    // set the port, use https
+    https.createServer(httpsOptions, app).listen(3001);
+} catch (error) {
+    app.listen(3001);
+}
+
+
 
 
 

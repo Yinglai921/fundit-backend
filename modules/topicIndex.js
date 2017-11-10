@@ -39,12 +39,14 @@ const logger = new (winston.Logger)({
     new (winston.transports.Console)({
       timestamp: tsFormat,
       colorize: true,
-      level: 'info'
+      level: 'info',
+      json: true
     }),
     new (winston.transports.File)({
-      filename: `${logDir}/updateTopicIndex.log`,
+      filename: `${logDir}/history.log`,
       timestamp: tsFormat,
-      level: 'info'
+      level: 'info',
+      json: true
     })
   ]
 })

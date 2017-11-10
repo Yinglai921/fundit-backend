@@ -4,8 +4,6 @@
 const mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-//esClient = new elasticsearch.Client({host: 'http://localhost:9200',httpAuth: 'elastic:changeme'});
-
 // create a new schema
 var Topic = new Schema({
     topicId: {type: Number},
@@ -33,9 +31,7 @@ var Topic = new Schema({
     callIdentifier: {type: String},
     callTitle: {type: String},
     description: {type: String },
-    budget: {type: Number}
+    budget: {type: String}
 });
-
-//Topic.plugin(mongoosastic);
 
 module.exports = mongoose.model('topic', Topic);
